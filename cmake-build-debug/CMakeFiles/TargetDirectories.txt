@@ -1,0 +1,3 @@
+/home/null/Desktop/www/RC/ProxyCache/cmake-build-debug/CMakeFiles/ProxyCache.dir
+/home/null/Desktop/www/RC/ProxyCache/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/null/Desktop/www/RC/ProxyCache/cmake-build-debug/CMakeFiles/rebuild_cache.dir
