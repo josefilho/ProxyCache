@@ -3,8 +3,8 @@ project(ProxyCache)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Server Server.cpp src/NB_Socket.h)
-add_executable(Client Client.cpp src/NB_Socket.h)
+add_executable(Server Server.cpp src/Socket/Socket.h src/Socket/Socket.cpp)
+add_executable(Client Client.cpp src/Socket/Socket.h src/Socket/Socket.cpp)
 
 if(WIN32)
     target_link_libraries(Server ws2_32)
