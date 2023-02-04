@@ -19,9 +19,27 @@ Socket::Socket(int FD, sockaddr_in ADDR, int TYPE, int PROTOCOL):
     ip = inet_ntoa(addr.sin_addr);
 }
 
-Socket::~Socket() {
-    close(fd);
+Socket::Socket(sa_family_t FAMILY, const std::string& IP, uint16_t PORT, int TYPE, int PROTOCOL) {
+    family = FAMILY;
+    ip = IP;
+    port = PORT;
+    type = TYPE;
+    protocol = PROTOCOL;
+    server = false;
+
+    fd = socket(family, type, protocol);
+    if (fd == -1) {
+        throw std::runtime_error("Socket: Socket creation failed");
+    }
+
+    addr.sin_family = family;
+    addr.sin_port = htons(port);
+    if (inet_pton(family, ip.c_str(), &addr.sin_addr) <= 0) {
+        throw std::runtime_error("Socket: Invalid address");
+    }
 }
+
+Socket::~Socket() = default;
 
 bool Socket::setSockOptions(int OPTNAME) const {
     int optval = 1;
@@ -63,11 +81,11 @@ Socket Socket::Accept() const {
     return Socket(new_fd, new_addr);
 }
 
-std::string Socket::Recv(int SIZE) const {
+std::string Socket::Receive(int SIZE) const {
     char buffer[SIZE];
     ssize_t valread = read(fd, buffer, SIZE);
     if (valread == -1) {
-        throw std::runtime_error("Socket(Recv): Recv failed");
+        throw std::runtime_error("Socket(Recv): Receive failed");
     }
     return {buffer, (unsigned long)valread };
 }
@@ -79,8 +97,10 @@ void Socket::Send(const std::string &MSG) const {
 }
 
 void Socket::Connect(const std::string &IP, int PORT) {
-    port = PORT;
-    ip = IP;
+    if (server)
+        throw std::logic_error("Socket(Connect): Not a client");
+    this->ip = IP;
+    this->port = PORT;
     addr.sin_port = htons(port);
     if (inet_pton(family, ip.c_str(), &addr.sin_addr) <= 0) {
         throw std::runtime_error("Socket(Connect): Invalid address");
@@ -104,6 +124,22 @@ void Socket::setAddr(sa_family_t FAMILY, const std::string& IP, int PORT) {
 
 sockaddr_in Socket::getAddr() const {
     return addr;
+}
+
+std::string Socket::getHostByName(const std::string &HOST) {
+    hostent *he;
+    in_addr **addr_list;
+    if ((he = gethostbyname(HOST.c_str())) == nullptr) {
+        throw std::runtime_error("Socket(getHostByName): gethostbyname failed");
+    }
+    addr_list = (in_addr**)he->h_addr_list;
+    return inet_ntoa(*addr_list[0]);
+}
+
+void Socket::Close() const {
+    if (close(fd) == -1) {
+        throw std::runtime_error("Socket(Close): Close failed");
+    }
 }
 
 #endif // __unix
